@@ -103,6 +103,7 @@ class State:
     
     def start(self):
         """Start the server."""
+        self._stop.clear()
         self._thread = threading.Thread(target=lambda : self._run())
         self._thread.start()
 
