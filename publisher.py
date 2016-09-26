@@ -52,7 +52,7 @@ class Publisher:
         """A subscriber to the publisher."""
         logger = logging.getLogger('Publisher.Subscriber')
         
-        def __init__(self, url, prefix):
+        def __init__(self, url, prefix=''):
             """Create a subscriber.
             
             Args

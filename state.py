@@ -37,7 +37,7 @@ class State:
             socks = dict(poller.poll(10)) # milli-seconds
             if self._socket in socks and socks[self._socket] == zmq.POLLIN:
                 msg = self._socket.recv_json()
-                self.logger.debug('Received request %s', str(msg))
+                self.logger.info('Received request %s', str(msg))
                 result = self._process(msg)
                 self._socket.send_json(result)
                 
@@ -133,6 +133,7 @@ class State:
             context = zmq.Context.instance()
             self._socket = context.socket(zmq.REQ)
             self._socket.connect(server_url)
+            self._lock = threading.Lock()
 
         def add(self, data):
             """Add a data to the state.
@@ -142,10 +143,11 @@ class State:
             Returns
               a string for the id of the data or None if no data.
             """
-            self._socket.send_json({
-                'action': 'add',
-                'data': data })
-            result = self._socket.recv_json()
+            with self._lock:
+                self._socket.send_json({
+                    'action': 'add',
+                    'data': data })
+                result = self._socket.recv_json()
             if result.get('status') == 'OK':
                 return result.get('id')
             else:
@@ -160,10 +162,11 @@ class State:
             Returns
               the data for the id.
             """
-            self._socket.send_json({
-                'action': 'get',
-                'id': id})
-            result = self._socket.recv_json()
+            with self._lock:
+                self._socket.send_json({
+                    'action': 'get',
+                    'id': id})
+                result = self._socket.recv_json()
             if result.get('status') == 'OK':
                 return result.get('data')
             else:
@@ -179,11 +182,12 @@ class State:
             Returns
               a string for the id or None if error.
             """
-            self._socket.send_json({
-                'action': 'update',
-                'id': id,
-                'data': data})
-            result = self._socket.recv_json()
+            with self._lock:
+                self._socket.send_json({
+                    'action': 'update',
+                    'id': id,
+                    'data': data})
+                result = self._socket.recv_json()
             if result.get('status') == 'OK':
                 return result.get('id')
             else:
@@ -198,10 +202,11 @@ class State:
             Returns
               Boolean, true if succeeded
             """
-            self._socket.send_json({
-                'action': 'delete',
-                'id': id})
-            result = self._socket.recv_json()
+            with self._lock:
+                self._socket.send_json({
+                    'action': 'delete',
+                    'id': id})
+                result = self._socket.recv_json()
             if result.get('status') == 'OK':
                 return True
             else:
@@ -217,14 +222,14 @@ if __name__ == '__main__':
 
     client = state_server.get_client()
     for i in range(1):
-        logging.debug('Try send')
+        logging.info('Try send')
         id = client.add('1234')
         result = client.get(id)
-        logging.debug('Resp %s', result)
+        logging.info('Resp %s', result)
         id = client.update(id, '5678')
         result = client.get(id)
-        logging.debug('Updated %s', result)
+        logging.info('Updated %s', result)
         client.delete(id)
-        logging.debug('Delete %s', id)
+        logging.info('Delete %s', id)
     state_server.stop()
     state_server.list()
