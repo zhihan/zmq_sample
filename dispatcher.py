@@ -36,6 +36,7 @@ class Dispatcher:
         self.state_client = state.State.Client(state_url)
 
     def stop(self):
+        """Stop all the subscriber threads."""
         for sub in self.worker_subscribers:
             sub.stop()        
         
