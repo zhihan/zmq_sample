@@ -1,9 +1,7 @@
 """Simple state component."""
 
-import json
 import logging
 import sys
-import time
 import threading
 import uuid
 import zmq
